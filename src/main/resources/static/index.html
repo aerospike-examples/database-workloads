@@ -1,0 +1,190 @@
+<html>
+	<head>
+		<script src="node_modules/jquery/dist/jquery.min.js"></script>
+		<link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+		<link href="assets/css/DatabaseTester.css" rel="stylesheet">
+		<link href="node_modules/@fortawesome/fontawesome-free/css/fontawesome.css" rel="stylesheet">
+		<link href="node_modules/@fortawesome/fontawesome-free/css/all.css" rel="stylesheet">
+	</head>
+	<body>
+		<div class="container">
+			<div class="row text-center p-3 databases" style="color:lightgray; border-radius: 5px;">
+				<button type="button" class="btn btn-primary w-auto" id="newConnection"><i class="fa fa-plus d-block"></i> Create New<br>Connection</button>
+				<!-- <button type="button" class="btn btn-outline-success w-auto" id="Aerospike"><i class="fa-solid fa-database d-block"></i>Aerospike</button> -->
+			</div>
+			<div class="row">
+				<div class="dropdown w-auto">
+					<button class="btn btn-info dropdown-toggle" disabled type="button" data-bs-toggle="dropdown" aria-expanded="false" id="startWorkload">
+						Start Workload 
+					</button>
+					<ul class="dropdown-menu">
+						<li><a class="dropdown-item" href="#">Seed Data</a></li>
+						<li><a class="dropdown-item" href="#">Run Continuously</a></li>
+					</ul>
+				</div>
+				<!-- <button type="button" class="btn btn-info w-auto me-1 ms-3" id="startWorkload" disabled><i class="fa-solid fa-person-running"></i> Start Workload</button> -->
+				<button type="button" class="btn btn-info w-auto me-3" id="pauseWorkload" disabled><i class="fa-solid fa-pause"></i> Pause Workload</button>
+				<button type="button" class="btn btn-info w-auto me-5" id="stopWorkload" disabled><i class="fa-solid fa-hand"></i> Stop Workload</button>
+				<button type="button" class="btn btn-danger w-auto" id="deleteConnection" disabled><i class="fa-solid fa-trash-can"></i> Delete Connection</button>
+				<div class="d-inline-block">
+					Graph duration:
+					
+					<span>1 min</span>
+					<input type="range" class="form-range" id="graphDuration" value="180" min="60" max="3600">
+					<span>60 mins</span>
+					<span id="selectedDuration">3m 00s</span>
+				</div>
+			</div>
+			<div id="workloadErrorDisplay" class="row invalid-feedback"></div>
+			<div class="row my-3" id="WorkloadDetailsContainer"></div>
+		</div>
+
+		<!-- Modal: Create database connection-->
+		<div class="modal fade" id="createConnection" tabindex="-1">
+			<div class="modal-dialog modal-lg modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="modal-title fs-5">Create Database Connection</h1>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body">
+						<div class="container-fluid">
+							<form id="databaseConnectionControls" class="needs-validation" novalidate>
+								<div class="mb-3 row">
+									<label for="configName" class="col-sm-2 col-form-label">Name</label>
+									<div class="col-sm-10 has-validation">
+										<input type="text" class="form-control" required id="configName" placeholder="Unique config name">
+										<div class="invalid-feedback">
+											Please enter a valid connection name
+										</div>
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label for="databaseName" class="col-sm-2 col-form-label">Database</label>
+									<div class="col-sm-10" id="databaseNameGroup">
+										<input type="text" readonly class="form-control-plaintext" id="databaseName">
+										<select class="form-select"></select>
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label for="databaseVersion" class="col-sm-2 col-form-label">Version</label>
+									<div class="col-sm-10" id="databaseVersionGroup">
+										<input type="text" readonly class="form-control-plaintext" id="databaseVersion">
+										<select class="form-select"></select>
+									</div>
+								</div>
+							</form>
+							<div class="row invalid-feedback" id="connectionError"></div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+						<button type="button" class="btn btn-primary" id="newDatabaseConnectionFSubmit">Save</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal: Options for seeding the data-->
+		<div class="modal fade" id="seedDataModal" tabindex="-1">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="modal-title fs-5">Seed Data Workload</h1>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body">
+						<div class="container-fluid">
+							<form id="seedingDataControls" class="needs-validation" novalidate>
+								<div class="mb-3 row">
+									<label for="numRecords" class="col-sm-4 col-form-label">Number of Records</label>
+									<div class="col-sm-8" id="numRecordsGroup">
+										<input type="number" class="form-control" required id="numRecords" value="1000000">
+										<div class="invalid-feedback">
+											Records must be entered and greater than 0
+										</div>
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label for="numThreads" class="col-sm-4 col-form-label">Number of Threads</label>
+									<div class="col-sm-8" id="numThreadsGroup">
+										<input type="text" class="form-control" id="numThreads" value="1">
+										<div class="invalid-feedback">
+											Threads must be entered and greater than 0
+										</div>
+									</div>
+								</div>
+							</form>
+							<div class="row invalid-feedback" id="seedDataStartError">Error starting the seeding workload</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+						<button type="button" class="btn btn-primary" id="seedDataModelStart">Start</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- Modal: Options for running the workload-->
+		<div class="modal fade" id="runWorkloadModal" tabindex="-1">
+			<div class="modal-dialog modal-lg modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="modal-title fs-5">Run Workload</h1>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body">
+						<div class="container-fluid">
+							<form id="runningWorkloadControls" class="needs-validation" novalidate>
+								<div class="mb-3 row">
+									<label for="recordsInDatabase" class="col-sm-4 col-form-label">Records In Database</label>
+									<div class="col-sm-8" id="numRecordsInRunGroup">
+										<input type="number" class="form-control" required id="numRecordsInDatabase" value="1000000">
+										<div class="invalid-feedback">
+											Records existing in the database must be entered and greater than 0
+										</div>
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label for="numThreadsInRun" class="col-sm-4 col-form-label">Number of Threads</label>
+									<div class="col-sm-8" id="numThreadsInRunGroup">
+										<input type="text" class="form-control" id="numThreadsInRun" value="1">
+										<div class="invalid-feedback">
+											Threads must be entered and greater than 0
+										</div>
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label for="readWriteRatio" class="col-sm-4 col-form-label">Read/Write Ratio</label>
+									<div class="col-sm-8 text-center position-relative">
+										<input type="range" class="form-range" id="readWriteRatio" value="0">
+										<div>
+											<span class="reads float-start">100%<br/>reads</span>
+											<span class="writes float-end">0%<br/>writes</span>
+										</div>
+									</div>
+								</div>
+							</form>
+							<div class="row invalid-feedback" id="executionStartError">Error starting the execution workload</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+						<button type="button" class="btn btn-primary" id="continuousExecutionStart">Start</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="latencyGraph" class="statistics-graph"></div>
+        <div id="throughputGraph" class="statistics-graph"></div>
+
+		<script src="node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
+        <script src="node_modules/d3/dist/d3.min.js"></script>
+		<script src="assets/js/StatisticsGraph.js"></script>
+		<script src="assets/js/services.js"></script>
+		<script src="assets/js/newConnectionManager.js"></script>
+		<script src="assets/js/activeDatabaseManager.js"></script>
+		<script src="assets/js/activeWorkloadManager.js"></script>
+		<script src="assets/js/topLevelUi.js"></script>
+	</body>
+</html>
