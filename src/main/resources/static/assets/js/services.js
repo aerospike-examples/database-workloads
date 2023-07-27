@@ -108,6 +108,19 @@ serviceInterface = function() {
             method: "GET"
         });
     }
+
+    async function getServerStatus(activeDataseName, since) {
+        return $.ajax({
+            url: "/demo/api/status",
+            data: {
+                name: activeDataseName,
+                since: since
+            },
+            dataType: "json",
+            method: "GET"
+        });
+    }
+
     return {
         getDatabases: getDatabases,
         getDatabaseVersions: getDatabaseVersions,
@@ -118,7 +131,8 @@ serviceInterface = function() {
         resumeWorkload : resumeWorkload,
         stopWorkload : stopWorkload,
         getServerStatuses : getServerStatuses,
-        getTimingSamples : getTimingSamples
+        getTimingSamples : getTimingSamples,
+        getServerStatus : getServerStatus
     };
 } ();
 
@@ -172,8 +186,15 @@ serviceInterfaceMock = function() {
         return true;
     }
 
-    async function getTimingSamples(since) {
+    async function getTimingSamples(name, since) {
         return [];
+    }
+
+    async function getServerStatus(activeDataseName, since) {
+        return {activeWorkloadTenthsPercentComplete: -1,
+                activeWorkloadTimings: [],
+                workloadStates: {}
+            };
     }
     return {
         getDatabases: getDatabases,
@@ -185,6 +206,7 @@ serviceInterfaceMock = function() {
         resumeWorkload : resumeWorkload,
         stopWorkload : stopWorkload,
         getServerStatuses : getServerStatuses,
-        getTimingSamples : getTimingSamples
+        getTimingSamples : getTimingSamples,
+        getServerStatus : getServerStatus
     };
 }()

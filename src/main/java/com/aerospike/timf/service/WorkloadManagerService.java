@@ -8,13 +8,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.aerospike.timf.databases.DatabaseFunctions;
+import com.aerospike.timf.generators.CreditCardGeneratorSevice;
+import com.aerospike.timf.generators.PersonGeneratorService;
+import com.aerospike.timf.generators.TransactionGeneratorService;
+import com.aerospike.timf.model.CreditCard;
 import com.aerospike.timf.service.WorkloadExecutor.State;
+import com.aerospike.timf.workloads.CreditCardWorkloadManager;
+import com.aerospike.timf.workloads.WorkloadManager;
 
 @Service
 public class WorkloadManagerService {
     @Autowired
     private PersonGeneratorService personGeneratorService;
     
+    @Autowired
+    private CreditCardGeneratorSevice creditCardGenerator;
+    
+    @Autowired
+    private TransactionGeneratorService transactionGenerator;
     @Autowired
     private TimingService timingService;
     
@@ -40,6 +51,10 @@ public class WorkloadManagerService {
     }
     
     public synchronized void startWorkload(String databaseName, String jobName, Map<String, Object> parameters) {
+        // TODO: Fix this workload stuff
+//        WorkloadManager<Person> manager = new PersonWorkloadManager(personGeneratorService);
+        WorkloadManager<CreditCard> manager = new CreditCardWorkloadManager(creditCardGenerator, transactionGenerator);
+        
         WorkloadExecutor workloadExecutor = validateAndGetExecutor(databaseName);
         switch (jobName) {
         //TODO: This is very fragile code which comes about due to the desire to make workload management more flexible later.
@@ -47,12 +62,15 @@ public class WorkloadManagerService {
             workloadExecutor.startContinuousRun(
                     ((Number)parameters.get("numThreads")).intValue(), 
                     ((Number)parameters.get("numRecordsInDatabase")).longValue(), 
-                    ((Number)parameters.get("writePercent")).intValue());
+                    ((Number)parameters.get("writePercent")).intValue(),
+                    manager);
             break;
+            
         case "SeedData":
             workloadExecutor.startSeedData(
                     ((Number)parameters.get("numThreads")).intValue(),
-                    ((Number)parameters.get("numRecords")).longValue());
+                    ((Number)parameters.get("numRecords")).longValue(),
+                    manager);
             break;
         }
     }
@@ -76,5 +94,15 @@ public class WorkloadManagerService {
             results.put(key, databaseInstances.get(key).getState());
         }
         return results;
+    }
+    
+    public synchronized long getTenthsPercentageComplete(String databaseName) {
+        WorkloadExecutor workloadExecutor = databaseInstances.get(databaseName);
+        if (workloadExecutor == null) {
+            return -1;
+        }
+        else {
+            return workloadExecutor.getTenthsPercentageComplete();
+        }
     }
 }

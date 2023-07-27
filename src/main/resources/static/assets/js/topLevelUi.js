@@ -38,23 +38,37 @@ $(function() {
         //     .then((data) => console.log("Versions:", data));
     });
 
-    setInterval(function() {
-        getServerStatuses(services, activeDatabaseManager);
-    }, 5000);
+    // setInterval(function() {
+    //     getServerStatuses(services, activeDatabaseManager);
+    // }, 5000);
 
     let $latencyGraph = $("#latencyGraph");
     let $throughputGraph = $("#throughputGraph");
     let latencyGraph = StatisticsGraph($latencyGraph, "Aggregate", "LATENCY");
     let throughputGraph = StatisticsGraph($throughputGraph, "", "THROUGHPUT");
     let now = 0;
+    // setInterval(() => {
+    //     services.getTimingSamples(activeDatabaseManager.getCurrentDatabaseName(), 0)
+    //         .then(function(data) {
+    //             latencyGraph.update(data);
+    //             throughputGraph.update(data);
+    //         }, 
+    //         function(err) {
+    //             console.log("error getting timings", err);
+    //         });
+    // }, 1000);
+
     setInterval(() => {
-        services.getTimingSamples(activeDatabaseManager.getCurrentDatabaseName(), 0)
+        // TODO: Keep a running tally of where time is at to replace the fixed 0 here
+        services.getServerStatus(activeDatabaseManager.getCurrentDatabaseName(), 0)
             .then(function(data) {
-                latencyGraph.update(data);
-                throughputGraph.update(data);
-            }, 
+                latencyGraph.update(data.activeWorkloadTimings);
+                throughputGraph.update(data.activeWorkloadTimings);
+                activeDatabaseManager.reconcileServerStatus(data.workloadStates);
+                activeWorkloadManager.updateProgress(data.activeWorkloadTenthsPercentComplete);
+            },
             function(err) {
-                console.log("error getting timings", err);
+                console.log("error getting server status", err);
             });
     }, 1000);
 

@@ -1,5 +1,7 @@
 package com.aerospike.timf.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -7,9 +9,12 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.aerospike.client.AerospikeException;
+import com.aerospike.client.ResultCode;
 import com.aerospike.timf.databases.DatabaseFunctions;
-import com.aerospike.timf.model.Person;
+import com.aerospike.timf.generators.PersonGeneratorService;
 import com.aerospike.timf.timing.TimingCollector;
+import com.aerospike.timf.workloads.WorkloadManager;
 
 public class WorkloadExecutor {
     public enum State {
@@ -31,6 +36,7 @@ public class WorkloadExecutor {
     private final TimingService timingService;
     private final DatabaseFunctions<?> databaseFunctions;
     private final TimingCollector timingCollector;
+    private volatile long targetRecords = -1;
     
     public WorkloadExecutor(final String name, final Object databaseConnetion, DatabaseFunctions<?> databaseFunctions, PersonGeneratorService personGenerator, TimingService timingService) {
         this.executor = Executors.newCachedThreadPool();
@@ -55,6 +61,12 @@ public class WorkloadExecutor {
         }
     }
     
+    /**
+     * Determine if the paused flag is set. If it is, pause for 100ms then return true. Otherwise, return false.
+     * This would be better implemented as a wait/notify block (TODO)
+     * @return
+     * @throws InterruptedException
+     */
     private boolean checkPaused() throws InterruptedException {
         if (!paused) {
             return false;
@@ -106,31 +118,35 @@ public class WorkloadExecutor {
         }
     }
     
-    public void startContinuousRun(final int numThreads, final long numRecordsInDatabase, final int writePercent) {
+    public <T> void startContinuousRun(final int numThreads, final long numRecordsInDatabase, 
+            final int writePercent, final WorkloadManager<T> manager) {
+        
         this.beginJob(numThreads, () -> {
+            Map<String, Object> options = new HashMap<>();
+            options.put("writePercent", writePercent);
             activeThreads.incrementAndGet();
             try {
                 Random random = ThreadLocalRandom.current();
                 while (!terminate) {
                     if (!checkPaused()) {
                         long id = random.nextLong(numRecordsInDatabase);
-                        int percent = random.nextInt(100);
+                        
                         long now = 0;
                         try {
-                            if (percent < writePercent) {
-                                // Do an update
-                                Person person = personGeneratorService.generatePerson(id);
-                                now = System.nanoTime();
-                                databaseFunctions.updatePerson(databaseConnection, person);
-                            }
-                            else {
-                                now = System.nanoTime();
-                                databaseFunctions.readPerson(databaseConnection, id);
-                            }
+                            Object object = manager.prepareForContinualRunOperation(id, numRecordsInDatabase, options);
+                            now = System.nanoTime();
+                            manager.executeContinualRunOperation(id, object, options, databaseFunctions, databaseConnection);
                             timingCollector.addSample(true, (System.nanoTime() - now)/1000);
                         }
                         catch (Exception e) {
-                            timingCollector.addSample(false, (System.nanoTime() - now)/1000);
+                            if (now > 0) {
+                                timingCollector.addSample(false, (System.nanoTime() - now)/1000);
+                            }
+                            else {
+                                // must be an exception in the prepare step, do not log the sample
+                                System.err.printf("Error preparing workload: %s (%s)\n", e.getMessage(), e.getClass());
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
@@ -145,30 +161,81 @@ public class WorkloadExecutor {
         });
     }
     
-    public void startSeedData(final int numThreads, final long numRecords) {
+    public <T> void startSeedData(final int numThreads, final long numRecords, final WorkloadManager<T> manager) {
         this.recordCounter.set(0);
+        this.targetRecords = numRecords;
         this.beginJob(numThreads, () -> {
             activeThreads.incrementAndGet();
             try {
+                T entity = null;
+                int subordinateObjectsLeft = 0;
                 while (!terminate) {
                     if (!checkPaused()) {
-                        long id = recordCounter.getAndIncrement();
-                        if (id >= numRecords) {
-                            break;
+                        if (entity == null) {
+                            // Have to generate the next top level entity
+                            long id = recordCounter.getAndIncrement();
+                            if (id >= numRecords) {
+                                break;
+                            }
+                            else {
+                                long now = 0;
+                                try {
+                                    entity = manager.generatePrimaryEntity(id);
+                                    subordinateObjectsLeft = manager.getNumberOfSubordinateObjects(entity);
+                                    now = System.nanoTime();
+                                    manager.insertPrimaryEntity(entity, databaseFunctions, databaseConnection);
+                                    timingCollector.addSample(true, (System.nanoTime() - now)/1000);
+                                }
+                                catch (Exception e) {
+                                    if (now > 0) {
+                                        timingCollector.addSample(false, (System.nanoTime() - now)/1000);
+                                    }
+                                    else {
+                                        // must be an exception in the prepare step, do not log the sample
+                                        System.err.printf("Error preparing workload: %s (%s)\n", e.getMessage(), e.getClass());
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
                         }
                         else {
-                            Person person = personGeneratorService.generatePerson(id);
-                            long now = System.nanoTime();
+                            long now = 0;
+                            boolean succeeded = true;
                             try {
-                                databaseFunctions.insertPerson(databaseConnection, person);
-                                long time = System.nanoTime() - now;
-                                timingCollector.addSample(true, time/1000);
+                                Object object = manager.generateSubordinateEntity(entity, subordinateObjectsLeft);
+                                now = System.nanoTime();
+                                manager.saveSubordinateObject(object, entity, databaseFunctions, databaseConnection);
+                            }
+                            catch (AerospikeException ae) {
+                                if (ae.getResultCode() == ResultCode.MAX_ERROR_RATE || ae.getResultCode() == ResultCode.DEVICE_OVERLOAD) {
+                                    // Server is busy, back this thread off
+                                    Thread.sleep(ThreadLocalRandom.current().nextInt(20));
+                                    // Disqualify this result
+                                    now = 0;
+                                    subordinateObjectsLeft++;
+                                }
+                                else {
+                                    succeeded = false;
+                                }
                             }
                             catch (Exception e) {
-                                long time = System.nanoTime() - now;
-                                timingCollector.addSample(false, time/1000);
+                                succeeded = false;
+                                if (now == 0) {
+                                    // must be an exception in the prepare step, do not log the sample
+                                    System.err.printf("Error preparing workload: %s (%s)\n", e.getMessage(), e.getClass());
+                                    e.printStackTrace();
+                                }
                             }
-                            
+                            finally {
+                                if (now > 0) {
+                                    long time = System.nanoTime() - now;
+                                    timingCollector.addSample(succeeded, time/1000);
+                                }
+                                subordinateObjectsLeft--;
+                            }
+                        }
+                        if (subordinateObjectsLeft == 0) {
+                            entity = null;
                         }
                     }
                 }
@@ -178,9 +245,20 @@ public class WorkloadExecutor {
                 int activeCount = activeThreads.decrementAndGet();
                 if (activeCount == 0) {
                     this.setState(null, State.READY);
+                    this.targetRecords = -1;
                 }
             }
         });
     }
     
+    // Return the percentage complete, but if it's not a seeding workload return -1
+    public long getTenthsPercentageComplete() {
+        long totalRecords = this.targetRecords;
+        long currentlyDone = this.recordCounter.get();
+        State currentState = this.getState();
+        if ((currentState == State.RUNNING || currentState == State.PAUSED) && (totalRecords > 0)) {
+            return (currentlyDone * 1000)/totalRecords;
+        }
+        return -1;
+    }
 }

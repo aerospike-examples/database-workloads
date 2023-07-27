@@ -2,6 +2,8 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
     const MIN = 0;
     const AVG = 1;
     const MAX = 2;
+    const P95 = 3;
+    const P99 = 4;
 
     const margin = 50;
     // let width = 1024 - (margin * 2);
@@ -24,13 +26,17 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
     let line;
     let lineMin;
     let lineMax;
+    let lineP95;
+    let lineP99;
     let $area;
     let $data;
     let $dataMin;
     let $dataMax;
+    let $dataP95;
+    let $dataP99;
     let $tooltip;
     let minTime = 0;
-    let visibilities = {0 : true, 1 : true, 2: true};
+    let visibilities = {0 : true, 1 : true, 2: true, 3: false, 4: false};
     let dateFormatter = d3.timeFormat('%H:%M:%S');
     let timingMetricName = timingMetricNm;
     let timingData = [];
@@ -47,6 +53,8 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
     
           if (timingType == "LATENCY") {
             visibilities[MAX] = false;
+            visibilities[P95] = true;
+            visibilities[P99] = true;
           }
           createSvg();
           defineHeading();
@@ -107,13 +115,13 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
     
     const defineLegend = () => {
         let boxHeight = 25;
-        let boxWidth = 250;
+        let boxWidth = timingType =="LATENCY" ? 350 : 250;
         let xLabel = svg.append('g')
             .attr('class', 'legend')
             .attr('width', boxWidth)
             .attr('height', boxHeight)
             // .attr('transform', 'translate(10,10)')
-            .attr('transform', 'translate(' +(width-260) + ',0)');
+            .attr('transform', 'translate(' +(width-(boxWidth+10)) + ',0)');
         if (width < 600) {
           xLabel.attr('visibility', 'hidden');
         }
@@ -126,14 +134,14 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
     
         let labels = [];
         if (timingType =="LATENCY") {
-          labels = ["Min", "Avg", "Max"];
+          labels = ["Min", "Avg", "Max", "95%", "99%"];
         }
         else {
           labels = ["Failed", "Success", "Total"];
         }
         for (let i = 0; i < labels.length; i++) {
           let startX = (boxWidth / labels.length) * i;
-          let classType = (i == 0) ? 'lineMin' : (i == 1) ? 'line' : 'lineMax';
+          let classType = (i == 0) ? 'lineMin' : (i == 1) ? 'line' : (i == 2) ? 'lineMax' : (i == 3) ? 'lineP95' : 'lineP99';
           xLabel.append("line") 
             .attr("x1", startX + 12)
             .attr("y1", boxHeight/2)      
@@ -152,6 +160,8 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
               toggleVisibility(AVG, thisObj);
               toggleVisibility(MIN, thisObj);
               toggleVisibility(MAX, thisObj);
+              toggleVisibility(P95, thisObj);
+              toggleVisibility(P99, thisObj);
             });
     
           // If we need to default a visibility to false, set it true then toggle it to false.
@@ -168,6 +178,8 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
           case AVG: classString = "line"; break;
           case MIN: classString = "lineMin"; break;
           case MAX: classString = "lineMax"; break;
+          case P95: classString = "lineP95"; break;
+          case P99: classString = "lineP99"; break;
         }
         let isThisElement = element.classed(classString);
         if (isThisElement) {
@@ -237,6 +249,16 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
             .x((d, i) => xScale(getX(d)))
             .y((d, i) => yScale(getMinY(d)));
     
+          lineP95 = d3.line()
+            // .curve(d3.curveBasis)
+            .x((d, i) => xScale(getX(d)))
+            .y((d, i) => yScale(getP95Y(d)));
+    
+          lineP99 = d3.line()
+            // .curve(d3.curveBasis)
+            .x((d, i) => xScale(getX(d)))
+            .y((d, i) => yScale(getP99Y(d)));
+    
           area = d3.area()
             // .curve(d3.curveBasis)
             .x((d, i) => xScale(getX(d)))
@@ -290,6 +312,8 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
         $data = visCont.append('path').attr('class', 'line data');
         $dataMin = visCont.append('path').attr('class', 'lineMin data');
         $dataMax = visCont.append('path').attr('class', 'lineMax data');
+        $dataP95 = visCont.append('path').attr('class', 'lineP95 data');
+        $dataP99 = visCont.append('path').attr('class', 'lineP99 data');
         $area = visCont.append('path').attr('class', 'area data');
         createToolTip();
     }
@@ -316,6 +340,8 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
         if (data) {
           if (timingType == "LATENCY") {
             $area.datum(data).attr('d', area);
+            $dataP95.datum(data).attr('d', lineP95);
+            $dataP99.datum(data).attr('d', lineP99);
           }
           $data.datum(data).attr('d', line);
           $dataMax.datum(data).attr('d', lineMax);
@@ -328,6 +354,12 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
           let fn = getMinY;
           if (visibilities[MAX]) {
             fn = getMaxY;
+          }
+          else if (visibilities[P99]) {
+            fn = getP99Y;
+          }
+          else if (visibilities[P95]) {
+            fn = getP95Y;
           }
           else if (visibilities[AVG]) {
             fn = getY;
@@ -353,6 +385,12 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
           let fn = getMinY;
           if (visibilities[MAX]) {
             fn = getMaxY;
+          }
+          if (visibilities[P99]) {
+            fn = getP99Y;
+          }
+          if (visibilities[P95]) {
+            fn = getP95Y;
           }
           else if (visibilities[AVG]) {
             fn = getY;
@@ -385,6 +423,14 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
         return validatePoint(point) ? point.minTimeUs/1000.0 : 0;
     }
     
+    const getP99Y = (point) => {
+      return validatePoint(point) ? point.p99us/1000.0 : 0;
+    }
+  
+    const getP95Y = (point) => {
+      return validatePoint(point) ? point.p95us/1000.0 : 0;
+    }
+
     const getTotalTxns = (point) => {
         return validatePoint(point) ? point.failedOps+point.successfulOps : 0;
     }
@@ -402,11 +448,15 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
     }
 
     const formatLatency = (point) => {
-        return "Min:"+formatToOneDP(point.minTimeUs/1000.0) + ", Avg:" + formatToOneDP(point.avgTimeUs/1000.0) + ", Max:" + formatToOneDP(point.maxTimeUs/1000.0);
+        return `Min:${formatToOneDP(point.minTimeUs/1000.0)}, Avg:${formatToOneDP(point.avgTimeUs/1000.0)}, Max:${formatToOneDP(point.maxTimeUs/1000.0)}`;
     }
     
+    const formatLatencyPcts = (point) => {
+      return `p95:${formatToOneDP(point.p95us/1000.0)}, p99:${formatToOneDP(point.p99us/1000.0)}`;
+    }
+  
     const formatThroughput = (point) => {
-        return "Throughput:" + (point.successfulOps + point.failedOps) + " (" + point.successfulOps + ", "+point.failedOps +")";
+      return "Throughput:" + (point.successfulOps + point.failedOps) + " (" + point.successfulOps + ", "+point.failedOps +")";
     }
     
     const createToolTip = () => {
@@ -420,7 +470,7 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
         $tooltip.append('rect')
             .attr('class', 'tooltip')
             .attr('width', 200)
-            .attr('height', 70)
+            .attr('height', 90)
             .attr('x', -210)
             .attr('y', -22)
             .attr('rx', 4)
@@ -440,11 +490,16 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
             .attr('class', 'tooltip-latency')
             .attr('x', -202)
             .attr('y', 18);
+  
+        $tooltip.append('text')
+            .attr('class', 'tooltip-latency-pcts')
+            .attr('x', -202)
+            .attr('y', 38);
     
         $tooltip.append('text')
             .attr('class', 'tooltip-throughput')
             .attr('x', -202)
-            .attr('y', 38);
+            .attr('y', 58);
     
         svg.append('rect')
             .attr('class', 'overlay')
@@ -470,6 +525,7 @@ function StatisticsGraph($location, timingMetricNm, timingType) {
                   $tooltip.attr('transform', 'translate(' + xScale(dataPoint.sampleTime) + ',' + yScale(getHighestYFromPoint(dataPoint)) + ')');
                   $tooltip.select('.tooltip-date').text(dateFormatter(new Date(dataPoint.sampleTime)));
                   $tooltip.select('.tooltip-latency').text(formatLatency(dataPoint));
+                  $tooltip.select('.tooltip-latency-pcts').text(formatLatencyPcts(dataPoint));
                   $tooltip.select('.tooltip-throughput').text(formatThroughput(dataPoint));
                 }
               }

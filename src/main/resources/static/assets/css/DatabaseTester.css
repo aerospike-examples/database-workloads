@@ -63,6 +63,18 @@
 	stroke-width: 2;
 }
 
+.data.lineP95 {
+	stroke: darkblue;
+	fill: none;
+	stroke-width: 2;
+}
+
+.data.lineP99 {
+	stroke: deepskyblue;
+	fill: none;
+	stroke-width: 2;
+}
+
 .data.lineMin {
 	stroke: #6ac3ff;
 	fill: none;

@@ -39,8 +39,6 @@ public class DatabaseVersionService {
         
         System.out.println("Databases: " + getDatabaseImplementations());
         System.out.println("Versions: " + getDatabaseVersions(getDatabaseImplementations().get(0)));
-        DatabaseFunctions<?> db = getDatabaseImplmentation("Aerospike", "Managed");
-        System.out.println(db.getConfigItems());
     }
     
     private void saveDatabase(DatabaseFunctions<?> database) {

@@ -3,7 +3,9 @@ package com.aerospike.timf.databases;
 import java.util.List;
 import java.util.Map;
 
+import com.aerospike.timf.model.CreditCard;
 import com.aerospike.timf.model.Person;
+import com.aerospike.timf.model.Transaction;
 import com.aerospike.timf.service.DatabaseConfigItem;
 
 public interface DatabaseFunctions<T> {
@@ -24,4 +26,9 @@ public interface DatabaseFunctions<T> {
     void insertPerson(Object databaseConnection, Person person);
     void updatePerson(Object instance, Person person);
     Person readPerson(Object instance, long id);
+    
+    // Credit card processing
+    void insertCreditCard(Object databaseConnection, CreditCard card);
+    void addTransactionToCreditCard(Object databaseConnection, CreditCard card, Transaction transaction);
+    void readCreditCardTransactions(Object databaseConnection, long cardId);
 }

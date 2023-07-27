@@ -1,4 +1,4 @@
-package com.aerospike.timf.service;
+package com.aerospike.timf.generators;
 
 import java.util.ArrayList;
 import java.util.Date;

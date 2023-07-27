@@ -10,9 +10,7 @@ import com.aerospike.client.Host;
 import com.aerospike.client.IAerospikeClient;
 import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.TlsPolicy;
-import com.aerospike.mapper.tools.AeroMapper;
-import com.aerospike.mapper.tools.configuration.ClassConfig;
-import com.aerospike.timf.model.Person;
+import com.aerospike.timf.databases.AerospikeDatabaseBase.AerospikeInstanceDetails;
 import com.aerospike.timf.service.DatabaseConfigItem;
 
 @Database(name = "Aerospike", version = "Standard")
@@ -59,8 +57,7 @@ public class AerospikeDatabase extends AerospikeDatabaseBase implements Database
         }
         
         IAerospikeClient client = new AerospikeClient(cp, new Host[] { new Host(host, tlsName, port) } );
-        ClassConfig personConfig = new ClassConfig.Builder(Person.class).withNamespace(namespaceName).build();
-        AeroMapper mapper = new AeroMapper.Builder(client).withClassConfigurations(personConfig).build();
-        return new AerospikeInstanceDetails(client, mapper);
+        return new AerospikeInstanceDetails(client, getAeroMapper(client, namespaceName));
     }
+
 }

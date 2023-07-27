@@ -1,4 +1,4 @@
-package com.aerospike.timf.service;
+package com.aerospike.timf.generators;
 
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;

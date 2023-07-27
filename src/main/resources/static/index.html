@@ -26,11 +26,18 @@
 				<button type="button" class="btn btn-info w-auto me-3" id="pauseWorkload" disabled><i class="fa-solid fa-pause"></i> Pause Workload</button>
 				<button type="button" class="btn btn-info w-auto me-5" id="stopWorkload" disabled><i class="fa-solid fa-hand"></i> Stop Workload</button>
 				<button type="button" class="btn btn-danger w-auto" id="deleteConnection" disabled><i class="fa-solid fa-trash-can"></i> Delete Connection</button>
-				<div class="d-inline-block">
+			</div>
+			<div class="row">
+				<div class="progress d-none mt-4" style="height: 20px; padding: 0" id="fixedJobProgressBar">
+					<div class="progress-bar" role="progressbar" style="width:0%;">0%</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="d-inline-block mt-4">
 					Graph duration:
 					
 					<span>1 min</span>
-					<input type="range" class="form-range" id="graphDuration" value="180" min="60" max="3600">
+					<input type="range" class="form-range" id="graphDuration" value="180" min="60" max="3600" step="15">
 					<span>60 mins</span>
 					<span id="selectedDuration">3m 00s</span>
 				</div>

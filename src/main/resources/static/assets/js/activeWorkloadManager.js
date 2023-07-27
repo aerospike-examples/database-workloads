@@ -142,6 +142,18 @@ function createActiveWorkloadManager(services) {
         }
     }
 
+    function updateProgress(tenthsPercent) {
+        let $progress = $("#fixedJobProgressBar");
+        if (tenthsPercent >= 0) {
+            let $progressBar = $progress.find(".progress-bar");
+            $progress.removeClass("d-none");
+            let value = `${tenthsPercent/10}%`;
+            $progressBar.width(value).text(value);
+        }
+        else {
+            $progress.addClass("d-none");
+        }
+    }
     $startButtonWorkload1.on('click',
         function() { 
             // Force the menu to shut.
@@ -216,6 +228,7 @@ function createActiveWorkloadManager(services) {
     return {
         setActiveDatabaseManager: setActiveDatabaseManager,
         displayWorkloadsForDatabase: displayWorkloadsForDatabase,
-        updateStateForWorkload: updateStateForWorkload
+        updateStateForWorkload: updateStateForWorkload,
+        updateProgress : updateProgress
     }
 }
