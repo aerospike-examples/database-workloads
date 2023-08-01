@@ -20,6 +20,7 @@ import com.aerospike.client.cdt.MapOperation;
 import com.aerospike.client.cdt.MapOrder;
 import com.aerospike.client.cdt.MapPolicy;
 import com.aerospike.client.cdt.MapWriteFlags;
+import com.aerospike.client.policy.BatchPolicy;
 import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.TlsPolicy;
 import com.aerospike.mapper.tools.AeroMapper;
@@ -137,7 +138,6 @@ public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatab
         for (int i = 0; i < DAYS_TO_FETCH; i++) {
             keys[i] = new Key(creditCardNamespace, SET_NAME, "Pan-" + cardId + ":" + (dayOffset - i));
         }
-        
         Record records[] = details.getClient().get(null, keys);
         List<Transaction> txnList = new ArrayList<>();
         int count = 0;

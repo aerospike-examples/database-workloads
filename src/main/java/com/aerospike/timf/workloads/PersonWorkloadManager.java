@@ -20,7 +20,7 @@ public class PersonWorkloadManager extends WorkloadManager<Person> {
     }
 
     @Override
-    public void insertPrimaryEntity(Person person, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) {
+    public void insertPrimaryEntity(Person person, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception {
         databaseFunctions.insertPerson(databaseConnection, person);
     }
 
@@ -47,7 +47,7 @@ public class PersonWorkloadManager extends WorkloadManager<Person> {
     
     @Override
     public void executeContinualRunOperation(long id, Object object, Map<String, Object> options,
-            DatabaseFunctions<?> databaseFunctions, Object databaseConnection) {
+            DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception {
         
         if (object == null) {
             // read operation

@@ -9,12 +9,12 @@ public abstract class WorkloadManager<T> {
         return 0;
     }
 
-    public abstract T generatePrimaryEntity(long id);
-    public abstract void insertPrimaryEntity(T entity, DatabaseFunctions<?> databaseFunctions, Object databaseConnection);
+    public abstract T generatePrimaryEntity(long id) throws Exception;
+    public abstract void insertPrimaryEntity(T entity, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception;
 
-    public void saveSubordinateObject(Object subordinate, T mainEntity, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) {}
+    public void saveSubordinateObject(Object subordinate, T mainEntity, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception {}
     
-    public Object generateSubordinateEntity(T mainEntity, long subordinateId) {
+    public Object generateSubordinateEntity(T mainEntity, long subordinateId) throws Exception {
         return null;
     }
     
@@ -27,7 +27,7 @@ public abstract class WorkloadManager<T> {
      * @param options
      * @return
      */
-    public Object prepareForContinualRunOperation(final long id, final long numRecordsInDatabase, Map<String, Object> options) {
+    public Object prepareForContinualRunOperation(final long id, final long numRecordsInDatabase, Map<String, Object> options) throws Exception {
         return null;
     }
     
@@ -40,5 +40,5 @@ public abstract class WorkloadManager<T> {
      * @param databaseFunctions - The functions used to perform database operations
      * @param databaseConnection - The object which stored database connection information.
      */
-    public abstract void executeContinualRunOperation(final long id, Object object, Map<String, Object> options, DatabaseFunctions<?> databaseFunctions, Object databaseConnection);
+    public abstract void executeContinualRunOperation(final long id, Object object, Map<String, Object> options, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception ;
 }

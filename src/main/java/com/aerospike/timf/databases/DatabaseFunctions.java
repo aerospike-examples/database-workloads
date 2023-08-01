@@ -23,12 +23,12 @@ public interface DatabaseFunctions<T> {
     void disconnectInstance(T params);
     
     // For now, until we clean up the workload management
-    void insertPerson(Object databaseConnection, Person person);
-    void updatePerson(Object instance, Person person);
-    Person readPerson(Object instance, long id);
+    void insertPerson(Object databaseConnection, Person person) throws Exception;
+    void updatePerson(Object instance, Person person) throws Exception;
+    Person readPerson(Object instance, long id) throws Exception;
     
     // Credit card processing
-    void insertCreditCard(Object databaseConnection, CreditCard card);
-    void addTransactionToCreditCard(Object databaseConnection, CreditCard card, Transaction transaction);
-    void readCreditCardTransactions(Object databaseConnection, long cardId);
+    void insertCreditCard(Object databaseConnection, CreditCard card) throws Exception;
+    void addTransactionToCreditCard(Object databaseConnection, CreditCard card, Transaction transaction) throws Exception;
+    void readCreditCardTransactions(Object databaseConnection, long cardId) throws Exception;
 }

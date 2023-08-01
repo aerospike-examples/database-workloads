@@ -24,7 +24,7 @@ public class CreditCardWorkloadManager extends WorkloadManager<CreditCard> {
     }
 
     @Override
-    public void insertPrimaryEntity(CreditCard entity, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) {
+    public void insertPrimaryEntity(CreditCard entity, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception {
         databaseFunctions.insertCreditCard(databaseConnection, entity);
     }
     
@@ -46,13 +46,13 @@ public class CreditCardWorkloadManager extends WorkloadManager<CreditCard> {
     
     @Override
     public void saveSubordinateObject(Object subordinate, CreditCard mainEntity, DatabaseFunctions<?> databaseFunctions,
-            Object databaseConnection) {
+            Object databaseConnection) throws Exception {
         databaseFunctions.addTransactionToCreditCard(databaseConnection, mainEntity, (Transaction)subordinate);
     }
 
     @Override
     public void executeContinualRunOperation(long id, Object object, Map<String, Object> options,
-            DatabaseFunctions<?> databaseFunctions, Object databaseConnection) {
+            DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception {
 
         databaseFunctions.readCreditCardTransactions(databaseConnection, id);
     }
