@@ -78,20 +78,17 @@ public class AerospikeDatabaseSimpleCreditCardSolution extends AerospikeDatabase
     }
 
     @Override
-    public void insertCreditCard(Object instance, CreditCard card) {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)instance;
-        details.getMapper().save(card);
+    public void insertCreditCard(AerospikeInstanceDetails instance, CreditCard card) {
+        instance.getMapper().save(card);
     }
     
     @Override
-    public void addTransactionToCreditCard(Object instance, CreditCard card, Transaction transaction) {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)instance;
-        details.getMapper().save(transaction);
+    public void addTransactionToCreditCard(AerospikeInstanceDetails instance, CreditCard card, Transaction transaction) {
+        instance.getMapper().save(transaction);
     }
 
     @Override
-    public void readCreditCardTransactions(Object databaseConnection, long cardId) {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)databaseConnection;
+    public void readCreditCardTransactions(AerospikeInstanceDetails databaseConnection, long cardId) {
         // Perform a secondary index query with an expression to filter out any dates older than 30 days
         Statement stmt = new Statement();
         stmt.setNamespace("test");
@@ -103,10 +100,10 @@ public class AerospikeDatabaseSimpleCreditCardSolution extends AerospikeDatabase
         queryPolicy.filterExp = Exp.build(Exp.ge(Exp.intBin("txnDate"), Exp.val(startTime)));
         
         List<Transaction> txnList = new ArrayList<>();
-        RecordSet results = details.getClient().query(queryPolicy, stmt);
+        RecordSet results = databaseConnection.getClient().query(queryPolicy, stmt);
         while (results.next()) {
             Record record  = results.getRecord();
-            Transaction trans = details.getMapper().getMappingConverter().convertToObject(Transaction.class, record);
+            Transaction trans = databaseConnection.getMapper().getMappingConverter().convertToObject(Transaction.class, record);
             txnList.add(trans);
         }
         

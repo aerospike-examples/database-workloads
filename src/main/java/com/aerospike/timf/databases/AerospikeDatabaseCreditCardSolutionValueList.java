@@ -20,7 +20,6 @@ import com.aerospike.client.cdt.MapOperation;
 import com.aerospike.client.cdt.MapOrder;
 import com.aerospike.client.cdt.MapPolicy;
 import com.aerospike.client.cdt.MapWriteFlags;
-import com.aerospike.client.policy.BatchPolicy;
 import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.TlsPolicy;
 import com.aerospike.mapper.tools.AeroMapper;
@@ -37,7 +36,6 @@ public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatab
     private final static String MAP_BIN = "txns";
     private final static String SET_NAME = "txns2";
     private final static int DAYS_TO_FETCH = 30;
-    private String creditCardSet;
     private String creditCardNamespace;
     private MapPolicy mapPolicy = new MapPolicy(MapOrder.KEY_ORDERED, MapWriteFlags.DEFAULT);
     
@@ -85,7 +83,6 @@ public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatab
         
         IAerospikeClient client = new AerospikeClient(cp, new Host[] { new Host(host, tlsName, port) } );
         AeroMapper mapper = getAeroMapper(client, namespaceName);
-        this.creditCardSet = mapper.getSet(CreditCard.class);
         this.creditCardNamespace = mapper.getNamespace(CreditCard.class);
         return new AerospikeInstanceDetails(client, getAeroMapper(client, namespaceName));
     }
@@ -99,15 +96,13 @@ public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatab
     }
     
     @Override
-    public void insertCreditCard(Object instance, CreditCard card) {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)instance;
-        details.getMapper().save(card);
+    public void insertCreditCard(AerospikeInstanceDetails instance, CreditCard card) {
+        instance.getMapper().save(card);
     }
     
     @Override
-    public void addTransactionToCreditCard(Object instance, CreditCard card, Transaction transaction) {
+    public void addTransactionToCreditCard(AerospikeInstanceDetails instance, CreditCard card, Transaction transaction) {
         try {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)instance;
         Key key = getCardBucketKey(transaction);
         List<Object> transactionAsList = Arrays.asList(
                 transaction.getTxnDate().getTime(),
@@ -118,7 +113,7 @@ public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatab
                 transaction.getTerminalId(),
                 transaction.getMerchantName());
         
-        details.getClient().operate(null, key,
+        instance.getClient().operate(null, key,
                 MapOperation.setMapPolicy(mapPolicy, MAP_BIN),
                 MapOperation.put(mapPolicy, MAP_BIN, Value.get(transaction.getTxnId()), Value.get(transactionAsList))
             );
@@ -130,15 +125,14 @@ public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatab
     }
 
     @Override
-    public void readCreditCardTransactions(Object databaseConnection, long cardId) {
+    public void readCreditCardTransactions(AerospikeInstanceDetails databaseConnection, long cardId) {
         int LIMIT = 50_000;
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)databaseConnection;
         long dayOffset = calculateDaysSinceEpoch(new Date());
         Key[] keys = new Key[DAYS_TO_FETCH];
         for (int i = 0; i < DAYS_TO_FETCH; i++) {
             keys[i] = new Key(creditCardNamespace, SET_NAME, "Pan-" + cardId + ":" + (dayOffset - i));
         }
-        Record records[] = details.getClient().get(null, keys);
+        Record records[] = databaseConnection.getClient().get(null, keys);
         List<Transaction> txnList = new ArrayList<>();
         int count = 0;
         for (int i = 0; i < DAYS_TO_FETCH && count < LIMIT; i++) {

@@ -12,11 +12,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.aerospike.client.AerospikeException;
 import com.aerospike.client.ResultCode;
 import com.aerospike.timf.databases.DatabaseFunctions;
-import com.aerospike.timf.generators.PersonGeneratorService;
 import com.aerospike.timf.timing.TimingCollector;
+import com.aerospike.timf.workloads.SubordinateObjectsWorkloadManager;
 import com.aerospike.timf.workloads.WorkloadManager;
 
-public class WorkloadExecutor {
+public class WorkloadExecutor<C> {
     public enum State {
         READY,
         PAUSED,
@@ -24,29 +24,30 @@ public class WorkloadExecutor {
     }
     
     private final String name;
-    private final Object databaseConnection; 
+    private final C databaseConnection; 
     private final ExecutorService executor;
-    private String currentWorkload;
     private volatile State state = State.READY;
     private volatile boolean paused = false;
     private volatile boolean terminate = false;
     private final AtomicInteger activeThreads = new AtomicInteger();
     private final AtomicLong recordCounter = new AtomicLong();
-    private final PersonGeneratorService personGeneratorService;
     private final TimingService timingService;
-    private final DatabaseFunctions<?> databaseFunctions;
+    private final DatabaseFunctions<C> databaseFunctions;
     private final TimingCollector timingCollector;
     private volatile long targetRecords = -1;
     
-    public WorkloadExecutor(final String name, final Object databaseConnetion, DatabaseFunctions<?> databaseFunctions, PersonGeneratorService personGenerator, TimingService timingService) {
+    public WorkloadExecutor(final String name, final C databaseConnetion, DatabaseFunctions<C> databaseFunctions, TimingService timingService) {
         this.executor = Executors.newCachedThreadPool();
         this.databaseConnection = databaseConnetion;
-        this.personGeneratorService = personGenerator;
         this.databaseFunctions = databaseFunctions;
         this.timingService = timingService;
         this.timingCollector = new TimingCollector();
         this.timingService.registerTimingCollector(name, timingCollector);
         this.name = name;
+    }
+    
+    public String getName() {
+        return name;
     }
     
     private synchronized void beginJob(int numThreads, Runnable runner) {
@@ -164,6 +165,8 @@ public class WorkloadExecutor {
     public <T> void startSeedData(final int numThreads, final long numRecords, final WorkloadManager<T> manager) {
         this.recordCounter.set(0);
         this.targetRecords = numRecords;
+        SubordinateObjectsWorkloadManager subordinateManager = (manager instanceof SubordinateObjectsWorkloadManager) ? (SubordinateObjectsWorkloadManager<T, ?>) manager : null;
+        
         this.beginJob(numThreads, () -> {
             activeThreads.incrementAndGet();
             try {
@@ -181,7 +184,7 @@ public class WorkloadExecutor {
                                 long now = 0;
                                 try {
                                     entity = manager.generatePrimaryEntity(id);
-                                    subordinateObjectsLeft = manager.getNumberOfSubordinateObjects(entity);
+                                    subordinateObjectsLeft = subordinateManager == null ? 0 : subordinateManager.getNumberOfSubordinateObjects(entity);
                                     now = System.nanoTime();
                                     manager.insertPrimaryEntity(entity, databaseFunctions, databaseConnection);
                                     timingCollector.addSample(true, (System.nanoTime() - now)/1000);
@@ -199,12 +202,13 @@ public class WorkloadExecutor {
                             }
                         }
                         else {
+                            // We can only get to here if this object has subordinate objects.
                             long now = 0;
                             boolean succeeded = true;
                             try {
-                                Object object = manager.generateSubordinateEntity(entity, subordinateObjectsLeft);
+                                Object object = subordinateManager.generateSubordinateEntity(entity, subordinateObjectsLeft);
                                 now = System.nanoTime();
-                                manager.saveSubordinateObject(object, entity, databaseFunctions, databaseConnection);
+                                subordinateManager.saveSubordinateObject(object, entity, databaseFunctions, databaseConnection);
                             }
                             catch (AerospikeException ae) {
                                 if (ae.getResultCode() == ResultCode.MAX_ERROR_RATE || ae.getResultCode() == ResultCode.DEVICE_OVERLOAD) {

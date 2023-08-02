@@ -8,7 +8,7 @@ import com.aerospike.timf.model.Person;
 import com.aerospike.timf.model.Transaction;
 import com.aerospike.timf.service.DatabaseConfigItem;
 
-public interface DatabaseFunctions<T> {
+public interface DatabaseFunctions<C> {
     List<DatabaseConfigItem> getConfigItems();
     /**
      * Attach to an instance of the database. The parameters passed to this function will be the user selected values for the config items.
@@ -18,17 +18,17 @@ public interface DatabaseFunctions<T> {
      * @param configParameters
      * @return - An object used to store the state of this instance. This will be passed back into the methods to execute work.
      */
-    T connectInstance(Map<String, Object> configParameters);
+    C connectInstance(Map<String, Object> configParameters);
     
-    void disconnectInstance(T params);
+    void disconnectInstance(C params);
     
     // For now, until we clean up the workload management
-    void insertPerson(Object databaseConnection, Person person) throws Exception;
-    void updatePerson(Object instance, Person person) throws Exception;
-    Person readPerson(Object instance, long id) throws Exception;
+    void insertPerson(C databaseConnection, Person person) throws Exception;
+    void updatePerson(C databaseConnection, Person person) throws Exception;
+    Person readPerson(C databaseConnection, long id) throws Exception;
     
     // Credit card processing
-    void insertCreditCard(Object databaseConnection, CreditCard card) throws Exception;
-    void addTransactionToCreditCard(Object databaseConnection, CreditCard card, Transaction transaction) throws Exception;
-    void readCreditCardTransactions(Object databaseConnection, long cardId) throws Exception;
+    void insertCreditCard(C databaseConnection, CreditCard card) throws Exception;
+    void addTransactionToCreditCard(C databaseConnection, CreditCard card, Transaction transaction) throws Exception;
+    void readCreditCardTransactions(C databaseConnection, long cardId) throws Exception;
 }

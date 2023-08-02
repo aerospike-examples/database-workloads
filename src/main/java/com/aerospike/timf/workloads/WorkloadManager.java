@@ -5,18 +5,13 @@ import java.util.Map;
 import com.aerospike.timf.databases.DatabaseFunctions;
 
 public abstract class WorkloadManager<T> {
-    public int getNumberOfSubordinateObjects(T entity) {
+    protected int getNumberOfSubordinateObjects(T entity) {
         return 0;
     }
-
-    public abstract T generatePrimaryEntity(long id) throws Exception;
-    public abstract void insertPrimaryEntity(T entity, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception;
-
-    public void saveSubordinateObject(Object subordinate, T mainEntity, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception {}
     
-    public Object generateSubordinateEntity(T mainEntity, long subordinateId) throws Exception {
-        return null;
-    }
+    public abstract T generatePrimaryEntity(long id) throws Exception;
+    public abstract <C> void insertPrimaryEntity(T entity, DatabaseFunctions<C> databaseFunctions, C databaseConnection) throws Exception;
+
     
     /**
      * Optional method called prior to {@link WorkplaceManager.executeContinualRunOperation}. This call is not timed and so can be used
@@ -40,5 +35,5 @@ public abstract class WorkloadManager<T> {
      * @param databaseFunctions - The functions used to perform database operations
      * @param databaseConnection - The object which stored database connection information.
      */
-    public abstract void executeContinualRunOperation(final long id, Object object, Map<String, Object> options, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception ;
+    public abstract <C> void executeContinualRunOperation(final long id, Object object, Map<String, Object> options, DatabaseFunctions<C> databaseFunctions, C databaseConnection) throws Exception ;
 }

@@ -9,7 +9,7 @@ import com.aerospike.timf.generators.TransactionGeneratorService;
 import com.aerospike.timf.model.CreditCard;
 import com.aerospike.timf.model.Transaction;
 
-public class CreditCardWorkloadManager extends WorkloadManager<CreditCard> {
+public class CreditCardWorkloadManager extends SubordinateObjectsWorkloadManager<CreditCard, Transaction> {
     private final CreditCardGeneratorSevice creditCardGenerator;
     private final TransactionGeneratorService txnGenerator;
     
@@ -24,7 +24,7 @@ public class CreditCardWorkloadManager extends WorkloadManager<CreditCard> {
     }
 
     @Override
-    public void insertPrimaryEntity(CreditCard entity, DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception {
+    public <C> void insertPrimaryEntity(CreditCard entity, DatabaseFunctions<C> databaseFunctions, C databaseConnection) throws Exception {
         databaseFunctions.insertCreditCard(databaseConnection, entity);
     }
     
@@ -40,19 +40,19 @@ public class CreditCardWorkloadManager extends WorkloadManager<CreditCard> {
     }
 
     @Override
-    public Object generateSubordinateEntity(CreditCard mainEntity, long subordinateId) {
+    public Transaction generateSubordinateEntity(CreditCard mainEntity, long subordinateId) {
         return this.txnGenerator.generateTransaction(subordinateId, mainEntity.getPan(), true);
     }
     
     @Override
-    public void saveSubordinateObject(Object subordinate, CreditCard mainEntity, DatabaseFunctions<?> databaseFunctions,
-            Object databaseConnection) throws Exception {
+    public <C> void saveSubordinateObject(Transaction subordinate, CreditCard mainEntity, DatabaseFunctions<C> databaseFunctions,
+            C databaseConnection) throws Exception {
         databaseFunctions.addTransactionToCreditCard(databaseConnection, mainEntity, (Transaction)subordinate);
     }
 
     @Override
-    public void executeContinualRunOperation(long id, Object object, Map<String, Object> options,
-            DatabaseFunctions<?> databaseFunctions, Object databaseConnection) throws Exception {
+    public <C> void executeContinualRunOperation(long id, Object object, Map<String, Object> options,
+            DatabaseFunctions<C> databaseFunctions, C databaseConnection) throws Exception {
 
         databaseFunctions.readCreditCardTransactions(databaseConnection, id);
     }

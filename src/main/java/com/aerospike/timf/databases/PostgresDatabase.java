@@ -114,25 +114,25 @@ public class PostgresDatabase implements DatabaseFunctions<PostgresConnectionOpt
     }
 
     @Override
-    public void insertPerson(Object databaseConnection, Person person) {
+    public void insertPerson(PostgresConnectionOptions databaseConnection, Person person) {
         // TODO Auto-generated method stub
         
     }
 
     @Override
-    public void updatePerson(Object instance, Person person) {
+    public void updatePerson(PostgresConnectionOptions instance, Person person) {
         // TODO Auto-generated method stub
         
     }
 
     @Override
-    public Person readPerson(Object instance, long id) {
+    public Person readPerson(PostgresConnectionOptions instance, long id) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void insertCreditCard(Object databaseConnection, CreditCard card) {
+    public void insertCreditCard(PostgresConnectionOptions databaseConnection, CreditCard card) {
         PostgresConnectionOptions connOptions = (PostgresConnectionOptions)databaseConnection;
         final String preparedStmtText = "insert into CREDIT_CARD(PAN, CARD_NO, VERSION, CARD_NAME, SUPPL_CARDS, EXP_MONTH, EXP_YEAR, CVC_HASH) values "
                 + "(?, ?, ?, ?, ?, ?, ?, ?)"; 
@@ -164,14 +164,13 @@ public class PostgresDatabase implements DatabaseFunctions<PostgresConnectionOpt
     }
 
     @Override
-    public void addTransactionToCreditCard(Object databaseConnection, CreditCard card, Transaction transaction) {
-        PostgresConnectionOptions connOptions = (PostgresConnectionOptions)databaseConnection;
+    public void addTransactionToCreditCard(PostgresConnectionOptions databaseConnection, CreditCard card, Transaction transaction) {
         final String preparedStmtText = "insert into TRANSACTION(TXN_ID, PAN, DATE, AMOUNT, MERCHANT_NAME, DESCRIPTION, CUST_ID, TERMINAL_ID) values "
                 + "(?, ?, ?, ?, ?, ?, ?, ?)"; 
         Connection conn = null;
         try {
             java.sql.Timestamp sqlDateTime = new Timestamp(transaction.getTxnDate().getTime());
-            conn = connOptions.getDataSource().getConnection();
+            conn = databaseConnection.getDataSource().getConnection();
             PreparedStatement pstmt = conn.prepareStatement(preparedStmtText);
             pstmt.setString(1, transaction.getTxnId());
             pstmt.setString(2, transaction.getPan());
@@ -197,8 +196,7 @@ public class PostgresDatabase implements DatabaseFunctions<PostgresConnectionOpt
     }
 
     @Override
-    public void readCreditCardTransactions(Object databaseConnection, long cardId) {
-        PostgresConnectionOptions connOptions = (PostgresConnectionOptions)databaseConnection;
+    public void readCreditCardTransactions(PostgresConnectionOptions databaseConnection, long cardId) {
         final String preparedStmtText = "select TXN_ID, PAN, DATE, AMOUNT, MERCHANT_NAME, DESCRIPTION, CUST_ID, TERMINAL_ID "
                 + "from TRANSACTION where PAN = ? and date >= ? order by DATE desc LIMIT 50000";
         Connection conn = null;
@@ -206,7 +204,7 @@ public class PostgresDatabase implements DatabaseFunctions<PostgresConnectionOpt
             long startTime = new java.util.Date().getTime() - TimeUnit.DAYS.toMillis(30);
             java.sql.Timestamp sqlDateTime = new Timestamp(startTime);
             String pk = "Pan-" + cardId;
-            conn = connOptions.getDataSource().getConnection();
+            conn = databaseConnection.getDataSource().getConnection();
             PreparedStatement pstmt = conn.prepareStatement(preparedStmtText);
             
             pstmt.setString(1, pk);

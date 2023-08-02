@@ -77,33 +77,27 @@ public abstract class AerospikeDatabaseBase  {
         params.getClient().close();
     }
 
-    public void insertPerson(Object instance, Person person) {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)instance;
-        details.getMapper().save(person);
+    public void insertPerson(AerospikeInstanceDetails instance, Person person) {
+        instance.getMapper().save(person);
     }
 
-    public void updatePerson(Object instance, Person person) {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)instance;
-        details.getMapper().save(person);
+    public void updatePerson(AerospikeInstanceDetails instance, Person person) {
+        instance.getMapper().save(person);
     }
 
-    public Person readPerson(Object instance, long id) {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)instance;
-        return details.getMapper().read(Person.class, id);
+    public Person readPerson(AerospikeInstanceDetails instance, long id) {
+        return instance.getMapper().read(Person.class, id);
     }
 
-    public void insertCreditCard(Object instance, CreditCard card) {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)instance;
-        details.getMapper().save(card);
+    public void insertCreditCard(AerospikeInstanceDetails instance, CreditCard card) {
+        instance.getMapper().save(card);
     }
     
-    public void addTransactionToCreditCard(Object instance, CreditCard card, Transaction transaction) {
-        AerospikeInstanceDetails details = (AerospikeInstanceDetails)instance;
-        details.getMapper().save(transaction);
+    public void addTransactionToCreditCard(AerospikeInstanceDetails instance, CreditCard card, Transaction transaction) {
+        instance.getMapper().save(transaction);
     }
 
-    public void readCreditCardTransactions(Object databaseConnection, long cardId) {
-        // TODO: This is not used in the default implementation
+    public void readCreditCardTransactions(AerospikeInstanceDetails databaseConnection, long cardId) {
     }
 
 }
