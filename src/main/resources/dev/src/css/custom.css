@@ -1,0 +1,49 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+*{
+  box-sizing: border-box;
+}
+.btn{
+  min-width: 75px;
+  padding: .5rem;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+.btnPrimary:disabled{
+  color: rgb(206, 206, 206);
+  background-color: #8f0608;
+  cursor: default;
+}
+.btnPrimary{
+  color: #fff;
+  background-color: #c31618;
+}
+.btnPrimary:hover:not([disabled]){
+  color: #c31618;
+  background-color: #fff;
+  border-color: #c31618;
+}
+.btnSecondary{
+  color: #000;
+  background-color: lightgray;
+}
+.btnSecondary:disabled{
+  color:lightgray;
+  background-color: gray;
+  cursor: default;
+}
+.btnSecondary:hover:not([disabled]){
+  border-color: #000;
+}

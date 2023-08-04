@@ -16,3 +16,6 @@ out/
 
 ## OS X
 .DS_Store
+
+## vscode
+.vscode

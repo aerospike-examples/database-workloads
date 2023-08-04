@@ -1,0 +1,22 @@
+.label{
+    display: flex;
+    flex-flow: row wrap;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1rem;
+}
+.span{
+    display: block;
+    min-width: fit-content;
+}
+.input:not([type=checkbox]), .select {
+    width: 300px;
+    font-size: 1rem;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid lightgray;
+}
+.input:where([type=checkbox]){
+    margin-right: 285px;
+}

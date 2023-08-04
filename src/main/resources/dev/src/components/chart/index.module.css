@@ -1,0 +1,16 @@
+.chart{
+    height: 100%;
+    position: relative;
+    padding: 5px;
+}
+.title{
+    width: 100%;
+    position: absolute;
+    top: 0;
+    text-align: center;
+    z-index: -1;
+}
+.titleText{
+    font-size: 1.5rem;
+    font-weight: 300;
+}

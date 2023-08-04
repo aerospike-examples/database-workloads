@@ -1,0 +1,12 @@
+.connect{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.error{
+    display: block;
+    font-size: .9rem;
+    color: red;
+    text-align: center;
+    padding: 15px 0 0;
+}
