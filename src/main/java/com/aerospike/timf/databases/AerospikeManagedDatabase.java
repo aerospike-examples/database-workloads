@@ -35,6 +35,10 @@ public class AerospikeManagedDatabase extends AerospikeDatabaseBase implements D
     protected boolean isUserRequired() {
         return true;
     }
+    @Override
+    protected String getDefaultNamespace() {
+        return "aerospike_cloud";
+    }
     
     @Override
     public AerospikeInstanceDetails connectInstance(Map<String, Object> configParameters) {
@@ -49,7 +53,7 @@ public class AerospikeManagedDatabase extends AerospikeDatabaseBase implements D
         cp.password = password;
         cp.tlsPolicy = new TlsPolicy();
         
-        IAerospikeClient client = new AerospikeClientProxy(cp, new Host[] { new Host(host, port) } );
+        IAerospikeClient client = new AerospikeClientProxy(cp, new Host(host, port)  );
         return new AerospikeInstanceDetails(client, getAeroMapper(client, namespaceName));
     }
 

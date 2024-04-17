@@ -26,7 +26,7 @@ import com.aerospike.timf.model.CreditCard;
 import com.aerospike.timf.model.Transaction;
 import com.aerospike.timf.service.DatabaseConfigItem;
 
-@Database(name = "Aerospike", version = "Credit Card Soln 1")
+//@Database(name = "Aerospike", version = "Credit Card Soln 1")
 @Service
 public class AerospikeDatabaseSimpleCreditCardSolution extends AerospikeDatabaseBase implements DatabaseFunctions<AerospikeInstanceDetails> {
     @Override
@@ -50,6 +50,10 @@ public class AerospikeDatabaseSimpleCreditCardSolution extends AerospikeDatabase
     @Override
     protected boolean isUserRequired() {
         return false;
+    }
+    @Override
+    protected String getDefaultNamespace() {
+        return "test";
     }
     
     @Override

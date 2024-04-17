@@ -90,7 +90,7 @@ public class PostgresDatabase implements DatabaseFunctions<PostgresConnectionOpt
                     + "PRIMARY KEY(TXN_ID));"
                     );
             stmt.executeUpdate(
-                    "create index if not exists TXN_DATE_IDX on TRANSACTION(DATE DESC)");
+                    "create index if not exists TXN_DATE_IDX on TRANSACTION(PAN, DATE DESC)");
             
             return new PostgresConnectionOptions(connectString, user, password, ds);
         }

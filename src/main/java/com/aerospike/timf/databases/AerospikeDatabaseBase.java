@@ -42,7 +42,7 @@ public abstract class AerospikeDatabaseBase  {
 
     public List<DatabaseConfigItem> getCommonConfigItems() {
         return new ArrayList<>(Arrays.asList(
-                new DatabaseConfigItem(NAMESPACE_CONFIG_NAME, "Namespace", "", "test"),
+                new DatabaseConfigItem(NAMESPACE_CONFIG_NAME, "Namespace", "", getDefaultNamespace()),
                 new DatabaseConfigItem(HOST_CONFIG_NAME, "Host", "Host identity, either IP address or DNS name", getDefaultHost()),
                 new DatabaseConfigItem(PORT_CONFIG_NAME, "Port", "Port to connect", "Port", getDefaultPort()),
                 new DatabaseConfigItem(USER_CONFIG_NAME, "User", "User name to connect to database (Optional)", DatabaseConfigItem.Type.STRING, isUserRequired()),
@@ -53,6 +53,7 @@ public abstract class AerospikeDatabaseBase  {
     protected abstract int getDefaultPort();
     protected abstract String getDefaultHost();
     protected abstract boolean isUserRequired();
+    protected abstract String getDefaultNamespace();
     
     protected void initialize( ) {
         

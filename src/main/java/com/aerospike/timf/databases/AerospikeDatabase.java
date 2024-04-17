@@ -40,6 +40,11 @@ public class AerospikeDatabase extends AerospikeDatabaseBase implements Database
     }
     
     @Override
+    protected String getDefaultNamespace() {
+        return "test";
+    }
+    
+    @Override
     public AerospikeInstanceDetails connectInstance(Map<String, Object> configParameters) {
         String host = (String) configParameters.get(HOST_CONFIG_NAME);
         int port = (int) configParameters.get(PORT_CONFIG_NAME);

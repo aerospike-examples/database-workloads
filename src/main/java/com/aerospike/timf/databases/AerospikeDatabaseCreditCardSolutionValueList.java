@@ -7,6 +7,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,7 @@ import com.aerospike.timf.model.CreditCard;
 import com.aerospike.timf.model.Transaction;
 import com.aerospike.timf.service.DatabaseConfigItem;
 
-@Database(name = "Aerospike", version = "Credit Card Soln 2")
+//@Database(name = "Aerospike", version = "Credit Card Soln 2")
 @Service
 public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatabaseBase implements DatabaseFunctions<AerospikeInstanceDetails> {
     
@@ -62,6 +63,10 @@ public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatab
     @Override
     protected boolean isUserRequired() {
         return false;
+    }
+    @Override
+    protected String getDefaultNamespace() {
+        return "test";
     }
     
     @Override
@@ -123,6 +128,32 @@ public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatab
             throw e;
         }
     }
+    public void readCreditCardTransactions2(IAerospikeClient client, long cardId) {
+        long dayOffset = calculateDaysSinceEpoch(new Date());
+        Key[] keys = new Key[DAYS_TO_FETCH];
+        for (int i = 0; i < DAYS_TO_FETCH; i++) {
+            keys[i] = new Key(creditCardNamespace, SET_NAME, 
+                              "Pan-" + cardId + ":" + (dayOffset - i));
+        }
+        Record records[] = client.get(null, keys);
+        List<Transaction> txnList = new ArrayList<>();
+        for (int i = 0; i < DAYS_TO_FETCH; i++) {
+            if (records[i] == null) {
+                continue;
+            }
+            TreeMap<Long, Map<String, Object>> map =
+                      (TreeMap<Long,Map<String,Object>>)records[i].getMap(MAP_BIN);
+            for (long txnDate : map.descendingKeySet()) {
+                Map<String, Object> data = map.get(txnDate);
+                Transaction txn = new Transaction();
+                txn.setTxnId((String)data.get("txnId"));
+                txn.setTxnDate(new Date(txnDate));
+                txn.setAmount((long)data.get("amount"));
+                txn.setDescription((String)data.get("desc"));
+                txnList.add(txn);
+            }
+        }
+    }
 
     @Override
     public void readCreditCardTransactions(AerospikeInstanceDetails databaseConnection, long cardId) {
@@ -159,5 +190,4 @@ public class AerospikeDatabaseCreditCardSolutionValueList extends AerospikeDatab
             }
         }
     }
-
 }

@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.aerospike.timf</groupId>
 	<artifactId>DatabaseWorkloads</artifactId>
-	<version>0.9.1</version>
+	<version>0.9.2</version>
 	<name>DatabaseTester</name>
 	<description>Workload tester for various databases</description>
 	<properties>
@@ -34,7 +34,7 @@
       <dependency>
         <groupId>com.aerospike</groupId>
         <artifactId>aerospike-proxy-client</artifactId>
-        <version>6.1.9-0.10.0-proxy</version>
+        <version>8.0.2</version>
       </dependency>
 
 		<dependency>
@@ -50,7 +50,7 @@
 		<dependency>
 		    <groupId>com.aerospike</groupId>
 		    <artifactId>java-object-mapper</artifactId>
-		    <version>2.3.0</version>
+		    <version>2.3.2</version>
 		</dependency>
 		
 		<!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
@@ -66,11 +66,18 @@
 		    <version>5.0.1</version>
 		</dependency>
 
-<dependency>
-    <groupId>biz.paluch.redis</groupId>
-    <artifactId>lettuce</artifactId>
-    <version>3.2.Final</version>
-</dependency>
+		<!-- https://mvnrepository.com/artifact/io.lettuce/lettuce-core -->
+		<!--dependency>
+		    <groupId>io.lettuce</groupId>
+		    <artifactId>lettuce-core</artifactId>
+		    <version>6.3.2.RELEASE</version>
+		</dependency-->
+
+		<!--dependency>
+		    <groupId>biz.paluch.redis</groupId>
+		    <artifactId>lettuce</artifactId>
+		    <version>3.2.Final</version>
+		</dependency-->
 
 	</dependencies>
 
